@@ -2,6 +2,8 @@ package br.com.zenon.fraud.cli;
 
 import br.com.zenon.fraud.model.Transaction;
 import br.com.zenon.fraud.model.Type;
+import br.com.zenon.fraud.repository.TransactionListRepository;
+import br.com.zenon.fraud.repository.TransactionMapRepository;
 import br.com.zenon.fraud.service.FraudAnalyzer;
 import br.com.zenon.fraud.service.TransactionIngestor;
 
@@ -11,36 +13,50 @@ import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 
 public class Main {
 
     void main() throws IOException {
 
         String locale = "data/dataset.csv";
-
         TransactionIngestor ingestor = new TransactionIngestor();
-        FraudAnalyzer fraudAnalyzer = new FraudAnalyzer();
-
         List<Transaction> transactions = ingestor.readLines(locale);
 
-        IO.println("1. Total de Fraudes: " + fraudAnalyzer.countFrauds(transactions));
+        TransactionListRepository listRepository = new TransactionListRepository(transactions);
+        TransactionMapRepository mapRepository = new TransactionMapRepository(transactions);
 
-        IO.println("2. Top 3 Fraudes de Maior Valor: ");
-        for (BigDecimal amount : fraudAnalyzer.topFraudsByAmount(transactions)) {
-            IO.println(amount.setScale(2, RoundingMode.HALF_UP).toPlainString());
-        }
+        IO.println("--- Busca com List ---");
+        listRepository.findByOriginName("C1231006815").ifPresentOrElse(
+                IO::println,
+                () -> IO.println("Transação não encontrada para o cliente C1231006815")
+        );
+        listRepository.findByOriginName("C12345").ifPresentOrElse(
+                IO::println,
+                () -> IO.println("Transação não encontrada para o cliente C12345")
+        );
 
-        IO.println("3. Clientes Suspeitos: ");
-        for (String nameOrig : fraudAnalyzer.topSuspiciousOrigins(transactions)) {
-            IO.println(nameOrig);
-        }
+        IO.println("\n--- Busca com Map ---");
+        mapRepository.findByOriginName("C1231006815").ifPresentOrElse(
+                IO::println,
+                () -> IO.println("Transação não encontrada para o cliente C1231006815")
+        );
+        mapRepository.findByOriginName("C12345").ifPresentOrElse(
+                IO::println,
+                () -> IO.println("Transação não encontrada para o cliente C12345")
+        );
 
-        IO.println("4. Prejuízo Total: " + fraudAnalyzer.totalFraudAmount(transactions));
+        IO.println("\n--- Benchmark (pior caso: C1868032458) ---");
 
-        IO.println("5. Fraudes por Tipo: ");
-        for (Map.Entry<Type, Long> entry : fraudAnalyzer.fraudCountByType(transactions).entrySet()) {
-            IO.println(" - " + entry.getKey() + ": " + entry.getValue());
-        }
+        long inicioList = System.nanoTime();
+        listRepository.findByOriginName("C1868032458");
+        long fimList = System.nanoTime();
+        IO.println("Tempo List: " + (fimList - inicioList) + " ns");
+
+        long inicioMap = System.nanoTime();
+        mapRepository.findByOriginName("C1868032458");
+        long fimMap = System.nanoTime();
+        IO.println("Tempo Map: " + (fimMap - inicioMap) + " ns");
 
     }
 }
