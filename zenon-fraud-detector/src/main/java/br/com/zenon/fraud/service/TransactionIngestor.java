@@ -8,24 +8,29 @@ import java.io.IOException;
 import java.math.BigDecimal;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.ArrayList;
 import java.util.List;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 public class TransactionIngestor {
 
     public List<Transaction> readLines(String locale) throws IOException {
         Path path = Path.of(locale);
-        try (Stream<String> lines = Files.lines(path)) {
-            return lines
-                    .skip(1)
-                    .limit(1000)
-                    .map(this::parseLine)
-                    .collect(Collectors.toList());
+        List<String> lines = Files.readAllLines(path);
+        List<Transaction> transactions = new ArrayList<>();
+
+        for (int i = 1; i < lines.size(); i++) {
+            try {
+                transactions.add(parseLine(lines.get(i)));
+            } catch (Exception e) {
+                System.err.println("Erro: " + lines.get(i) + " | " + e.getMessage());
+            }
         }
+
+        return transactions;
     }
 
     private Transaction parseLine(String line) {
+        line = line.replace("\"", "");
         String[] fields = line.split(",");
 
         int step = Integer.parseInt(fields[0]);

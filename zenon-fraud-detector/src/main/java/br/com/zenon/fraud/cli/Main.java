@@ -10,14 +10,15 @@ public class Main {
 
     void main() throws IOException {
 
-        String locale = "data/dataset.csv";
+        String locale = "data/paysim_with_bad_data.csv";
 
         TransactionIngestor ingestor = new TransactionIngestor();
 
         List<Transaction> transactions = ingestor.readLines(locale);
 
-        for (int i = 0; i < 10; i++) {
-            System.out.println(transactions.get(i));
+        IO.println(transactions.size() + " transações válidas");
+        for (Transaction t : transactions) {
+            IO.println(t);
         }
 
     }
