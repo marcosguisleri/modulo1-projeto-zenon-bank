@@ -18,7 +18,7 @@ public class TransactionIngestor {
         List<String> lines = Files.readAllLines(path);
         List<Transaction> transactions = new ArrayList<>();
 
-        for (int i = 1; i < lines.size(); i++) {
+        for (int i = 1; i <= 50000; i++) {
             try {
                 transactions.add(parseLine(lines.get(i)));
             } catch (Exception e) {

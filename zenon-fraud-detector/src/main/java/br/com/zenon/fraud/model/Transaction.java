@@ -32,4 +32,5 @@ public record Transaction(
             throw new IllegalArgumentException("Destination cannot be null.");
         }
     }
+
 }
