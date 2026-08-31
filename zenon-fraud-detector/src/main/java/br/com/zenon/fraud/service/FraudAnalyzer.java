@@ -1,7 +1,7 @@
 package br.com.zenon.fraud.service;
 
 import br.com.zenon.fraud.model.Transaction;
-import br.com.zenon.fraud.model.Type;
+import br.com.zenon.fraud.model.TransactionType;
 
 import java.math.BigDecimal;
 import java.util.Comparator;
@@ -42,9 +42,9 @@ public class FraudAnalyzer {
                 .reduce(BigDecimal.ZERO, BigDecimal::add);
     }
 
-    public Map<Type, Long> fraudCountByType(List<Transaction> transactions) {
+    public Map<TransactionType, Long> fraudCountByType(List<Transaction> transactions) {
         return transactions.stream()
                 .filter(Transaction::fraud)
-                .collect(Collectors.groupingBy(Transaction::type, Collectors.counting()));
+                .collect(Collectors.groupingBy(Transaction::transactionType, Collectors.counting()));
     }
 }

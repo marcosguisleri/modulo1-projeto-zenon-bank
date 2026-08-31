@@ -4,7 +4,7 @@ import java.math.BigDecimal;
 
 public record Transaction(
         int step,
-        Type type,
+        TransactionType transactionType,
         BigDecimal amount,
         Customer origin,
         Customer destination,
@@ -20,7 +20,7 @@ public record Transaction(
             throw new IllegalArgumentException("amount should be positive: " + amount);
         }
 
-        if (type == null) {
+        if (transactionType == null) {
             throw new IllegalArgumentException("Type cannot be null.");
         }
 

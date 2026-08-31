@@ -1,6 +1,6 @@
 package br.com.zenon.fraud.service;
 
-import br.com.zenon.fraud.cli.ReportResult;
+import br.com.zenon.fraud.model.ReportResult;
 
 import java.io.IOException;
 import java.math.BigDecimal;
@@ -14,13 +14,13 @@ public class TransactionReport {
     private long totalFrauds;
     private BigDecimal totalAmount;
 
-    public ReportResult generateReport(String locale) throws IOException {
+    public ReportResult generateReport(String csvPath) throws IOException {
 
         totalTransactions = 0;
         totalFrauds = 0;
         totalAmount = BigDecimal.ZERO;
 
-        Path path = Path.of(locale);
+        Path path = Path.of(csvPath);
 
         try (Stream<String> lines = Files.lines(path)) {
 

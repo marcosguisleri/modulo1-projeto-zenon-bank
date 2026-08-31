@@ -1,21 +1,14 @@
 package br.com.zenon.fraud.cli;
 
 import br.com.zenon.fraud.model.Transaction;
-import br.com.zenon.fraud.model.Type;
 import br.com.zenon.fraud.repository.TransactionListRepository;
 import br.com.zenon.fraud.repository.TransactionMapRepository;
-import br.com.zenon.fraud.service.FraudAnalyzer;
 import br.com.zenon.fraud.service.TransactionIngestor;
 
-import java.awt.*;
 import java.io.IOException;
-import java.math.BigDecimal;
-import java.math.RoundingMode;
 import java.util.List;
-import java.util.Map;
-import java.util.Optional;
 
-public class Main {
+public class TransactionBenchmarkMain {
 
     void main() throws IOException {
 

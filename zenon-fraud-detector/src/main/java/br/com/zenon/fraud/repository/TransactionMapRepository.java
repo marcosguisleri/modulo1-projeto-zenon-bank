@@ -9,10 +9,10 @@ import java.util.stream.Collectors;
 
 public class TransactionMapRepository implements TransactionRepository {
 
-    Map<String, Transaction> map;
+    private final Map<String, Transaction> transactionsByOriginName;
 
     public TransactionMapRepository(List<Transaction> transactions) {
-        this.map = transactions.stream()
+        this.transactionsByOriginName = transactions.stream()
                 .collect(Collectors.toMap(
                         t -> t.origin().name(),
                         t -> t
@@ -20,7 +20,7 @@ public class TransactionMapRepository implements TransactionRepository {
     }
 
     @Override
-    public Optional<Transaction> findByOriginName(String name) {
-        return Optional.ofNullable(map.get(name));
+    public Optional<Transaction> findByOriginName(String originName) {
+        return Optional.ofNullable(transactionsByOriginName.get(originName));
     }
 }

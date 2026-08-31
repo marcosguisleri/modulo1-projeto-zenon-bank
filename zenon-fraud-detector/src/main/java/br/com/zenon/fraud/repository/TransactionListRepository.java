@@ -7,14 +7,14 @@ import java.util.Optional;
 
 public class TransactionListRepository implements TransactionRepository {
 
-    List<Transaction> transactions;
+    private final List<Transaction> transactions;
 
     public TransactionListRepository(List<Transaction> transactions) {
         this.transactions = transactions;
     }
 
     @Override
-    public Optional<Transaction> findByOriginName(String name) {
-        return transactions.stream().filter(t -> t.origin().name().equals(name)).findFirst();
+    public Optional<Transaction> findByOriginName(String originName) {
+        return transactions.stream().filter(t -> t.origin().name().equals(originName)).findFirst();
     }
 }
