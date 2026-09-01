@@ -1,7 +1,6 @@
 package br.com.zenon.fraud.cli;
 
 import br.com.zenon.fraud.model.Transaction;
-import br.com.zenon.fraud.repository.TransactionRepository;
 import br.com.zenon.fraud.repository.TransactionSQLRepository;
 import br.com.zenon.fraud.service.TransactionIngestor;
 
@@ -24,7 +23,7 @@ public class DBMain {
         try (Connection connection =
                      DriverManager.getConnection(url, user, password)) {
 
-            TransactionRepository repository =
+            TransactionSQLRepository repository =
                     new TransactionSQLRepository(connection);
 
             TransactionIngestor ingestor =
@@ -33,13 +32,11 @@ public class DBMain {
             List<Transaction> transactions =
                     ingestor.readTransactions(csvPath);
 
-            Long start = System.nanoTime();
+            long start = System.nanoTime();
 
-            for (Transaction transaction : transactions) {
-                repository.save(transaction);
-            }
+            repository.saveBatch(transactions);
 
-            Long end = System.nanoTime();
+            long end = System.nanoTime();
 
             double elapsedSeconds =
                     (end - start) / 1_000_000_000.0;

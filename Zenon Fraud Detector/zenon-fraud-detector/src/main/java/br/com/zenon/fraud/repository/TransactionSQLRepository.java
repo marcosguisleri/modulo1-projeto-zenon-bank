@@ -10,6 +10,7 @@ import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.util.List;
 import java.util.Optional;
 
 public class TransactionSQLRepository implements TransactionRepository {
@@ -46,7 +47,7 @@ public class TransactionSQLRepository implements TransactionRepository {
     @Override
     public Optional<Transaction> findByOriginName(String originName) {
         try (PreparedStatement statement =
-                connection.prepareStatement(FIND_BY_ORIGIN_NAME_SQL)) {
+                     connection.prepareStatement(FIND_BY_ORIGIN_NAME_SQL)) {
 
             statement.setString(1, originName);
 
@@ -93,29 +94,82 @@ public class TransactionSQLRepository implements TransactionRepository {
         try (PreparedStatement statement =
                      connection.prepareStatement(INSERT_SQL)) {
 
-            statement.setInt(1, transaction.step());
-            statement.setString(2, transaction.transactionType().name());
-            statement.setBigDecimal(3, transaction.amount());
-
-            statement.setString(4, transaction.origin().name());
-            statement.setBigDecimal(5, transaction.origin().oldBalance());
-            statement.setBigDecimal(6, transaction.origin().newBalance());
-
-            statement.setString(7, transaction.destination().name());
-            statement.setBigDecimal(8, transaction.destination().oldBalance());
-            statement.setBigDecimal(9, transaction.destination().newBalance());
-
-            statement.setBoolean(10, transaction.fraud());
-            statement.setBoolean(11, transaction.flaggedFraud());
+            fillStatement(transaction, statement);
 
             statement.executeUpdate();
 
         } catch (SQLException e) {
             throw new RepositoryException(
-                    "Erro ao salvar transação no banco de dado.",
+                    "Erro ao salvar transação no banco de dados.",
                     e
             );
         }
+    }
+
+    public void saveBatch(List<Transaction> transactions) throws SQLException {
+
+        try {
+            connection.setAutoCommit(false);
+
+            try (PreparedStatement statement =
+                         connection.prepareStatement(INSERT_SQL)) {
+
+                for (Transaction transaction : transactions) {
+
+                    fillStatement(transaction, statement);
+
+                    statement.addBatch();
+                }
+
+                statement.executeBatch();
+
+                connection.commit();
+
+            } catch (SQLException e) {
+
+                try {
+                    connection.rollback();
+                } catch (SQLException rollbackException) {
+                    e.addSuppressed(rollbackException);
+                }
+
+                throw new RepositoryException(
+                        "Erro ao salvar lote de transações no banco de dados.",
+                        e
+                );
+            }
+        } finally {
+            try {
+                connection.setAutoCommit(true);
+            } catch (SQLException e) {
+                throw new RepositoryException(
+                        "Erro ao restaurar auto commit da conexão.",
+                        e
+                );
+            }
+        }
+    }
+
+    private void fillStatement(
+            Transaction transaction,
+            PreparedStatement statement
+    ) throws SQLException {
+
+        statement.setInt(1, transaction.step());
+        statement.setString(2, transaction.transactionType().name());
+        statement.setBigDecimal(3, transaction.amount());
+
+        statement.setString(4, transaction.origin().name());
+        statement.setBigDecimal(5, transaction.origin().oldBalance());
+        statement.setBigDecimal(6, transaction.origin().newBalance());
+
+        statement.setString(7, transaction.destination().name());
+        statement.setBigDecimal(8, transaction.destination().oldBalance());
+        statement.setBigDecimal(9, transaction.destination().newBalance());
+
+        statement.setBoolean(10, transaction.fraud());
+        statement.setBoolean(11, transaction.flaggedFraud());
+
     }
 
 }
