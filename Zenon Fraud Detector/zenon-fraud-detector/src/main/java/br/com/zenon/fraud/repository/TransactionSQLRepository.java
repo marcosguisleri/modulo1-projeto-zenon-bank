@@ -106,7 +106,7 @@ public class TransactionSQLRepository implements TransactionRepository {
         }
     }
 
-    public void saveBatch(List<Transaction> transactions) throws SQLException {
+    public void saveBatch(List<Transaction> transactions) {
 
         try {
             connection.setAutoCommit(false);
@@ -115,30 +115,29 @@ public class TransactionSQLRepository implements TransactionRepository {
                          connection.prepareStatement(INSERT_SQL)) {
 
                 for (Transaction transaction : transactions) {
-
                     fillStatement(transaction, statement);
-
                     statement.addBatch();
                 }
 
                 statement.executeBatch();
-
                 connection.commit();
-
-            } catch (SQLException e) {
-
-                try {
-                    connection.rollback();
-                } catch (SQLException rollbackException) {
-                    e.addSuppressed(rollbackException);
-                }
-
-                throw new RepositoryException(
-                        "Erro ao salvar lote de transações no banco de dados.",
-                        e
-                );
             }
+
+        } catch (SQLException e) {
+
+            try {
+                connection.rollback();
+            } catch (SQLException rollbackException) {
+                e.addSuppressed(rollbackException);
+            }
+
+            throw new RepositoryException(
+                    "Erro ao salvar lote de transações no banco de dados.",
+                    e
+            );
+
         } finally {
+
             try {
                 connection.setAutoCommit(true);
             } catch (SQLException e) {
