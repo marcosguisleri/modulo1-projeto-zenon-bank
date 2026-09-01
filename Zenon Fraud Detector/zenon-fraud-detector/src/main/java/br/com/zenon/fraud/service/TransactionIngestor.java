@@ -13,12 +13,12 @@ import java.util.List;
 
 public class TransactionIngestor {
 
-    public List<Transaction> readLines(String csvPath) throws IOException {
+    public List<Transaction> readTransactions(String csvPath) throws IOException {
         Path path = Path.of(csvPath);
         List<String> lines = Files.readAllLines(path);
         List<Transaction> transactions = new ArrayList<>();
 
-        for (int i = 1; i <= 100000; i++) {
+        for (int i = 1; i <= 10_000; i++) {
             try {
                 transactions.add(parseLine(lines.get(i)));
             } catch (Exception e) {

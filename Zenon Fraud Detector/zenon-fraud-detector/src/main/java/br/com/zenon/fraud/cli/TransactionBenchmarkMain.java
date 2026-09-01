@@ -14,7 +14,7 @@ public class TransactionBenchmarkMain {
 
         String locale = "data/dataset.csv";
         TransactionIngestor ingestor = new TransactionIngestor();
-        List<Transaction> transactions = ingestor.readLines(locale);
+        List<Transaction> transactions = ingestor.readTransactions(locale);
 
         TransactionListRepository listRepository = new TransactionListRepository(transactions);
         TransactionMapRepository mapRepository = new TransactionMapRepository(transactions);
