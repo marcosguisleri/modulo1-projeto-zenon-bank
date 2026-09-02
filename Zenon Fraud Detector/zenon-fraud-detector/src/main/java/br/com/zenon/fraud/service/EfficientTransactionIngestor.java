@@ -7,6 +7,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.*;
 import java.util.function.Consumer;
 import java.util.stream.Stream;
 
@@ -24,7 +25,6 @@ public class EfficientTransactionIngestor {
         try (Stream<String> lines = Files.lines(path)) {
             lines
                     .skip(1)
-                    .limit(10_000)
                     .forEach(line -> {
 
                         Transaction transaction;
@@ -46,7 +46,8 @@ public class EfficientTransactionIngestor {
 
     public void readBatch(
             String csvPath,
-            Consumer<List<Transaction>> consumer
+            Consumer<List<Transaction>> consumer,
+            int threadCount
     ) throws IOException {
 
         Path path = Path.of(csvPath);
@@ -54,7 +55,21 @@ public class EfficientTransactionIngestor {
         List<Transaction> batch =
                 new ArrayList<>(BATCH_SIZE);
 
+        List<Future<?>> futures =
+                new ArrayList<>();
+
+        ExecutorService executor =
+                new ThreadPoolExecutor(
+                        threadCount,
+                        threadCount,
+                        0L,
+                        TimeUnit.MILLISECONDS,
+                        new ArrayBlockingQueue<>(threadCount * 2),
+                        new ThreadPoolExecutor.CallerRunsPolicy()
+                );
+
         try (Stream<String> lines = Files.lines(path)) {
+
             lines
                     .skip(1)
                     .forEach(line -> {
@@ -66,7 +81,10 @@ public class EfficientTransactionIngestor {
                                     TransactionParser.parseLine(line);
                         } catch (Exception e) {
                             System.err.println(
-                                    "Erro: " + line + " | " + e.getMessage()
+                                    "Erro: "
+                                            + line
+                                            + " | "
+                                            + e.getMessage()
                             );
                             return;
                         }
@@ -75,19 +93,65 @@ public class EfficientTransactionIngestor {
 
                         if (batch.size() == BATCH_SIZE) {
 
-                            consumer.accept(
-                                    new ArrayList<>(batch)
-                            );
+                            List<Transaction> batchToProcess =
+                                    new ArrayList<>(batch);
 
                             batch.clear();
+
+                            Future<?> future =
+                                    executor.submit(() ->
+                                            consumer.accept(batchToProcess)
+                                    );
+
+                            futures.add(future);
                         }
                     });
+
+            if (!batch.isEmpty()) {
+
+                List<Transaction> batchToProcess =
+                        new ArrayList<>(batch);
+
+                Future<?> future =
+                        executor.submit(() ->
+                                consumer.accept(batchToProcess)
+                        );
+
+                futures.add(future);
+            }
+
+        } finally {
+            executor.shutdown();
         }
 
-        if (!batch.isEmpty()) {
-            consumer.accept(
-                    new ArrayList<>(batch)
-            );
+        waitForTasks(futures);
+    }
+
+    private void waitForTasks(
+            List<Future<?>> futures
+    ) {
+
+        for (Future<?> future : futures) {
+            try {
+                future.get();
+
+            } catch (InterruptedException e) {
+
+                Thread.currentThread().interrupt();
+
+                throw new RuntimeException(
+                        "A ingestão foi interrompida.",
+                        e
+                );
+
+            } catch (ExecutionException e) {
+
+                throw new RuntimeException(
+                        "Erro durante o processamento de um lote.",
+                        e.getCause()
+                );
+            }
         }
     }
+
 }
